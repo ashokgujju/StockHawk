@@ -33,5 +33,6 @@
     <string name="toast_no_connectivity">Will refresh when network available.</string>
     <string name="sample_error_msg">Error message</string>
     <string name="dialog_tag">StockDialogFragment</string>
+    <string name="toast_invalid_symbol">%s is a invalid symbol!</string>
 
 </resources>

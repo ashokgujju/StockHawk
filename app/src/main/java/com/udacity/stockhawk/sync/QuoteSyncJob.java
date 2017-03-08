@@ -12,7 +12,6 @@ import android.net.NetworkInfo;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -32,15 +31,17 @@ public final class QuoteSyncJob {
 
     private static final int ONE_OFF_ID = 2;
     private static final String ACTION_DATA_UPDATED = "com.udacity.stockhawk.ACTION_DATA_UPDATED";
+    public static final String ACTION_INVALID_SYMBOL = "com.udacity.stockhawk.ACTION_INVALID_SYMBOL";
     private static final int PERIOD = 300000;
     private static final int INITIAL_BACKOFF = 10000;
     private static final int PERIODIC_ID = 1;
     private static final int YEARS_OF_HISTORY = 2;
+    public static final String SYMBOL_KEY = "symbol";
 
     private QuoteSyncJob() {
     }
 
-    static void getQuotes(Context context) {
+    static void getQuotes(final Context context) {
 
         Timber.d("Running sync job");
 
@@ -55,8 +56,6 @@ public final class QuoteSyncJob {
             stockCopy.addAll(stockPref);
             String[] stockArray = stockPref.toArray(new String[stockPref.size()]);
 
-            Timber.d(stockCopy.toString());
-
             if (stockArray.length == 0) {
                 return;
             }
@@ -64,17 +63,22 @@ public final class QuoteSyncJob {
             Map<String, Stock> quotes = YahooFinance.get(stockArray);
             Iterator<String> iterator = stockCopy.iterator();
 
-            Timber.d(quotes.toString());
-
             ArrayList<ContentValues> quoteCVs = new ArrayList<>();
 
             while (iterator.hasNext()) {
                 String symbol = iterator.next();
 
-
                 Stock stock = quotes.get(symbol);
-                StockQuote quote = stock.getQuote();
+                if (stock == null || stock.getName() == null) {
+                    // Invalid stock remove it
+                    PrefUtils.removeStock(context, symbol);
+                    Intent intent = new Intent(ACTION_INVALID_SYMBOL);
+                    intent.putExtra(SYMBOL_KEY, symbol);
+                    context.sendBroadcast(intent);
+                    continue;
+                }
 
+                StockQuote quote = stock.getQuote();
                 float price = quote.getPrice().floatValue();
                 float change = quote.getChange().floatValue();
                 float percentChange = quote.getChangeInPercent().floatValue();
@@ -113,7 +117,7 @@ public final class QuoteSyncJob {
             Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED);
             context.sendBroadcast(dataUpdatedIntent);
 
-        } catch (IOException exception) {
+        } catch (Exception exception) {
             Timber.e(exception, "Error fetching stock quotes");
         }
     }
@@ -135,12 +139,9 @@ public final class QuoteSyncJob {
         scheduler.schedule(builder.build());
     }
 
-
     public static synchronized void initialize(final Context context) {
-
         schedulePeriodic(context);
         syncImmediately(context);
-
     }
 
     public static synchronized void syncImmediately(Context context) {

@@ -1,6 +1,9 @@
 package com.udacity.stockhawk.ui;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -13,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -80,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 PrefUtils.removeStock(MainActivity.this, symbol);
                 getContentResolver().delete(Contract.Quote.makeUriForStock(symbol), null, null);
             }
+
+
         }).attachToRecyclerView(stockRecyclerView);
 
 
@@ -94,23 +98,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onRefresh() {
-
-        QuoteSyncJob.syncImmediately(this);
-
-        if (!networkUp() && adapter.getItemCount() == 0) {
-            swipeRefreshLayout.setRefreshing(false);
-            error.setText(getString(R.string.error_no_network));
-            error.setVisibility(View.VISIBLE);
-        } else if (!networkUp()) {
+        if (!networkUp()) {
             swipeRefreshLayout.setRefreshing(false);
             Toast.makeText(this, R.string.toast_no_connectivity, Toast.LENGTH_LONG).show();
-        } else if (PrefUtils.getStocks(this).size() == 0) {
-            swipeRefreshLayout.setRefreshing(false);
-            error.setText(getString(R.string.error_no_stocks));
-            error.setVisibility(View.VISIBLE);
-        } else {
-            error.setVisibility(View.GONE);
         }
+
+        if (PrefUtils.getStocks(this).size() != 0) {
+            QuoteSyncJob.syncImmediately(this);
+        } else
+            swipeRefreshLayout.setRefreshing(false);
     }
 
     public void button(@SuppressWarnings("UnusedParameters") View view) {
@@ -146,8 +142,24 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         if (data.getCount() != 0) {
             error.setVisibility(View.GONE);
+            adapter.setCursor(data);
         }
-        adapter.setCursor(data);
+
+        if (adapter.getItemCount() == 0) {
+            emptyState();
+        }
+    }
+
+    private void emptyState() {
+        if (!networkUp()) {
+            error.setText(getString(R.string.error_no_network));
+            error.setVisibility(View.VISIBLE);
+        } else if (PrefUtils.getStocks(this).size() == 0) {
+            error.setText(getString(R.string.error_no_stocks));
+            error.setVisibility(View.VISIBLE);
+        } else {
+            error.setVisibility(View.GONE);
+        }
     }
 
 
@@ -187,4 +199,26 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(broadcastReceiver, new IntentFilter(QuoteSyncJob.ACTION_INVALID_SYMBOL));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(broadcastReceiver);
+    }
+
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(QuoteSyncJob.ACTION_INVALID_SYMBOL)) {
+                String symbol = intent.getExtras().getString(QuoteSyncJob.SYMBOL_KEY);
+                Toast.makeText(context, getString(R.string.toast_invalid_symbol, symbol), Toast.LENGTH_LONG).show();
+            }
+        }
+    };
 }
