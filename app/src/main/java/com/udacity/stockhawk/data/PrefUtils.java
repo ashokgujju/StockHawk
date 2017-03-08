@@ -23,9 +23,7 @@ public final class PrefUtils {
         HashSet<String> defaultStocks = new HashSet<>(Arrays.asList(defaultStocksList));
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-
         boolean initialized = prefs.getBoolean(initializedKey, false);
-
         if (!initialized) {
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean(initializedKey, true);
@@ -40,16 +38,17 @@ public final class PrefUtils {
     private static void editStockPref(Context context, String symbol, Boolean add) {
         String key = context.getString(R.string.pref_stocks_key);
         Set<String> stocks = getStocks(context);
-
+        Set<String> stockCopy = new HashSet<>();
+        stockCopy.addAll(stocks);
         if (add) {
-            stocks.add(symbol);
+            stockCopy.add(symbol);
         } else {
-            stocks.remove(symbol);
+            stockCopy.remove(symbol);
         }
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putStringSet(key, stocks);
+        editor.putStringSet(key, stockCopy);
         editor.apply();
     }
 
@@ -87,5 +86,4 @@ public final class PrefUtils {
 
         editor.apply();
     }
-
 }
