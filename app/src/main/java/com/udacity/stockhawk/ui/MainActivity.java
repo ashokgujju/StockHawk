@@ -4,10 +4,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -36,6 +38,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         StockAdapter.StockAdapterOnClickHandler {
 
     private static final int STOCK_LOADER = 0;
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(QuoteSyncJob.ACTION_INVALID_SYMBOL)) {
+                String symbol = intent.getExtras().getString(QuoteSyncJob.SYMBOL_KEY);
+                Toast.makeText(context, getString(R.string.toast_invalid_stock_symbol, symbol), Toast.LENGTH_LONG).show();
+            }
+        }
+    };
     @SuppressWarnings("WeakerAccess")
     @BindView(R.id.recycler_view)
     RecyclerView stockRecyclerView;
@@ -65,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setRefreshing(true);
-        onRefresh();
 
         QuoteSyncJob.initialize(this);
         getSupportLoaderManager().initLoader(STOCK_LOADER, null, this);
@@ -83,10 +93,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 getContentResolver().delete(Contract.Quote.makeUriForStock(symbol), null, null);
             }
 
-
         }).attachToRecyclerView(stockRecyclerView);
-
-
     }
 
     private boolean networkUp() {
@@ -103,9 +110,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             Toast.makeText(this, R.string.toast_no_connectivity, Toast.LENGTH_LONG).show();
         }
 
-        if (PrefUtils.getStocks(this).size() != 0) {
+        if (PrefUtils.getStocks(this).size() != 0)
             QuoteSyncJob.syncImmediately(this);
-        } else
+        else
             swipeRefreshLayout.setRefreshing(false);
     }
 
@@ -116,15 +123,17 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     void addStock(String symbol) {
         if (symbol != null && !symbol.isEmpty()) {
 
+            PrefUtils.addStock(this, symbol);
+            QuoteSyncJob.syncImmediately(this);
+
             if (networkUp()) {
                 swipeRefreshLayout.setRefreshing(true);
             } else {
                 String message = getString(R.string.toast_stock_added_no_connectivity, symbol);
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                if (adapter.getItemCount() == 0)
+                    emptyState();
             }
-
-            PrefUtils.addStock(this, symbol);
-            QuoteSyncJob.syncImmediately(this);
         }
     }
 
@@ -132,43 +141,49 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(this,
                 Contract.Quote.URI,
-                Contract.Quote.QUOTE_COLUMNS.toArray(new String[]{}),
-                null, null, Contract.Quote.COLUMN_SYMBOL);
+                null, null, null, Contract.Quote.COLUMN_SYMBOL);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         swipeRefreshLayout.setRefreshing(false);
-
-        if (data.getCount() != 0) {
-            error.setVisibility(View.GONE);
-            adapter.setCursor(data);
-        }
+        adapter.setCursor(data);
 
         if (adapter.getItemCount() == 0) {
             emptyState();
-        }
-    }
-
-    private void emptyState() {
-        if (!networkUp()) {
-            error.setText(getString(R.string.error_no_network));
-            error.setVisibility(View.VISIBLE);
-        } else if (PrefUtils.getStocks(this).size() == 0) {
-            error.setText(getString(R.string.error_no_stocks));
-            error.setVisibility(View.VISIBLE);
         } else {
             error.setVisibility(View.GONE);
         }
     }
 
+    private void emptyState() {
+        if (PrefUtils.getStocks(this).size() == 0) {
+            error.setText(getString(R.string.error_no_stocks));
+            error.setVisibility(View.VISIBLE);
+        } else {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            @QuoteSyncJob.StockStatus int status = preferences.getInt(getString(R.string.stock_status_key),
+                    QuoteSyncJob.STOCK_STATUS_OK);
+            switch (status) {
+                case QuoteSyncJob.STOCK_STATUS_SERVER_ERROR:
+                    error.setText(getString(R.string.error_no_stocks_data));
+                    error.setVisibility(View.VISIBLE);
+                    break;
+                default: {
+                    if (!networkUp()) {
+                        error.setText(getString(R.string.error_no_network));
+                        error.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        }
+    }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         swipeRefreshLayout.setRefreshing(false);
         adapter.setCursor(null);
     }
-
 
     private void setDisplayModeMenuItemIcon(MenuItem item) {
         if (PrefUtils.getDisplayMode(this)
@@ -211,14 +226,4 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         super.onStop();
         unregisterReceiver(broadcastReceiver);
     }
-
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(QuoteSyncJob.ACTION_INVALID_SYMBOL)) {
-                String symbol = intent.getExtras().getString(QuoteSyncJob.SYMBOL_KEY);
-                Toast.makeText(context, getString(R.string.toast_invalid_symbol, symbol), Toast.LENGTH_LONG).show();
-            }
-        }
-    };
 }

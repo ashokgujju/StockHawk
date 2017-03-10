@@ -6,12 +6,19 @@ import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
+import android.support.annotation.IntDef;
 
+import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
 
+import java.io.FileNotFoundException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -35,8 +42,16 @@ public final class QuoteSyncJob {
     private static final int PERIOD = 300000;
     private static final int INITIAL_BACKOFF = 10000;
     private static final int PERIODIC_ID = 1;
-    private static final int YEARS_OF_HISTORY = 2;
+    private static final int YEARS_OF_HISTORY = 1;
     public static final String SYMBOL_KEY = "symbol";
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({STOCK_STATUS_OK, STOCK_STATUS_SERVER_ERROR})
+    public @interface StockStatus {
+    }
+
+    public static final int STOCK_STATUS_OK = 0;
+    public static final int STOCK_STATUS_SERVER_ERROR = 1;
 
     private QuoteSyncJob() {
     }
@@ -50,15 +65,14 @@ public final class QuoteSyncJob {
         from.add(Calendar.YEAR, -YEARS_OF_HISTORY);
 
         try {
-
             Set<String> stockPref = PrefUtils.getStocks(context);
+            if (stockPref.size() == 0) {
+                return;
+            }
+
             Set<String> stockCopy = new HashSet<>();
             stockCopy.addAll(stockPref);
             String[] stockArray = stockPref.toArray(new String[stockPref.size()]);
-
-            if (stockArray.length == 0) {
-                return;
-            }
 
             Map<String, Stock> quotes = YahooFinance.get(stockArray);
             Iterator<String> iterator = stockCopy.iterator();
@@ -83,17 +97,20 @@ public final class QuoteSyncJob {
                 float change = quote.getChange().floatValue();
                 float percentChange = quote.getChangeInPercent().floatValue();
 
-                // WARNING! Don't request historical data for a stock that doesn't exist!
-                // The request will hang forever X_x
-                List<HistoricalQuote> history = stock.getHistory(from, to, Interval.WEEKLY);
 
                 StringBuilder historyBuilder = new StringBuilder();
+                try {
+                    // WARNING! Don't request historical data for a stock that doesn't exist!
+                    // The request will hang forever X_x
+                    List<HistoricalQuote> history = stock.getHistory(from, to, Interval.WEEKLY);
+                    for (HistoricalQuote it : history) {
+                        historyBuilder.append(it.getDate().getTimeInMillis());
+                        historyBuilder.append(", ");
+                        historyBuilder.append(it.getClose());
+                        historyBuilder.append("\n");
+                    }
+                } catch (FileNotFoundException e) {
 
-                for (HistoricalQuote it : history) {
-                    historyBuilder.append(it.getDate().getTimeInMillis());
-                    historyBuilder.append(", ");
-                    historyBuilder.append(it.getClose());
-                    historyBuilder.append("\n");
                 }
 
                 ContentValues quoteCV = new ContentValues();
@@ -101,13 +118,23 @@ public final class QuoteSyncJob {
                 quoteCV.put(Contract.Quote.COLUMN_PRICE, price);
                 quoteCV.put(Contract.Quote.COLUMN_PERCENTAGE_CHANGE, percentChange);
                 quoteCV.put(Contract.Quote.COLUMN_ABSOLUTE_CHANGE, change);
-
-
                 quoteCV.put(Contract.Quote.COLUMN_HISTORY, historyBuilder.toString());
 
                 quoteCVs.add(quoteCV);
-
             }
+
+            Set<String> symbols = PrefUtils.getStocks(context);
+            int i = 0;
+            while (i < quoteCVs.size()) {
+                String symbol = quoteCVs.get(i).getAsString(Contract.Quote.COLUMN_SYMBOL);
+                if (!symbols.contains(symbol)) {
+                    quoteCVs.remove(i);
+                } else {
+                    i++;
+                }
+            }
+
+            setStockStatus(context, STOCK_STATUS_OK);
 
             context.getContentResolver()
                     .bulkInsert(
@@ -125,9 +152,7 @@ public final class QuoteSyncJob {
     private static void schedulePeriodic(Context context) {
         Timber.d("Scheduling a periodic task");
 
-
         JobInfo.Builder builder = new JobInfo.Builder(PERIODIC_ID, new ComponentName(context, QuoteJobService.class));
-
 
         builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPeriodic(PERIOD)
@@ -156,14 +181,19 @@ public final class QuoteSyncJob {
 
             JobInfo.Builder builder = new JobInfo.Builder(ONE_OFF_ID, new ComponentName(context, QuoteJobService.class));
 
-
             builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                     .setBackoffCriteria(INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_EXPONENTIAL);
-
 
             JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
 
             scheduler.schedule(builder.build());
         }
+    }
+
+    static private void setStockStatus(Context context, @StockStatus int stockStatus) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(context.getString(R.string.stock_status_key), stockStatus);
+        editor.commit();
     }
 }
