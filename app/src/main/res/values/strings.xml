@@ -38,5 +38,6 @@
     <string name="stock_status_key">stock_status</string>
     <string name="todays_stock">Today\'s stock</string>
     <string name="no_quotes_available">No quotes available!</string>
+    <string name="fab_description">Click to add a new stock symbol to the list!</string>
 
 </resources>

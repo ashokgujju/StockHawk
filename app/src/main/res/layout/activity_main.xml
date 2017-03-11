@@ -35,6 +35,7 @@
         app:borderWidth="@dimen/fab_border_width"
         app:elevation="@dimen/fab_elevation"
         app:fabSize="normal"
+        android:contentDescription="@string/fab_description"
         app:pressedTranslationZ="@dimen/fab_translation_z" />
 
     <TextView

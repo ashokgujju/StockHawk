@@ -54,19 +54,17 @@ class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
 
     @Override
     public StockViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
         View item = LayoutInflater.from(context).inflate(R.layout.list_item_quote, parent, false);
-
         return new StockViewHolder(item);
     }
 
     @Override
     public void onBindViewHolder(StockViewHolder holder, int position) {
-
         cursor.moveToPosition(position);
 
-
         holder.symbol.setText(cursor.getString(Contract.Quote.POSITION_SYMBOL));
+        holder.symbol.setContentDescription(cursor.getString(Contract.Quote.POSITION_NAME));
+
         holder.price.setText(dollarFormat.format(cursor.getFloat(Contract.Quote.POSITION_PRICE)));
 
 
