@@ -44,6 +44,8 @@ public final class QuoteSyncJob {
     private static final int PERIODIC_ID = 1;
     private static final int YEARS_OF_HISTORY = 1;
     public static final String SYMBOL_KEY = "symbol";
+    public static final String TIME_VALUE_DIVIDER = ", ";
+    public static final String QUOTE_DIVIDER = "\n";
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({STOCK_STATUS_OK, STOCK_STATUS_SERVER_ERROR})
@@ -105,9 +107,9 @@ public final class QuoteSyncJob {
                     List<HistoricalQuote> history = stock.getHistory(from, to, Interval.WEEKLY);
                     for (HistoricalQuote it : history) {
                         historyBuilder.append(it.getDate().getTimeInMillis());
-                        historyBuilder.append(", ");
+                        historyBuilder.append(TIME_VALUE_DIVIDER);
                         historyBuilder.append(it.getClose());
-                        historyBuilder.append("\n");
+                        historyBuilder.append(QUOTE_DIVIDER);
                     }
                 } catch (FileNotFoundException e) {
 
