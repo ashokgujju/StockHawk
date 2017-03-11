@@ -9,7 +9,6 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -25,6 +24,7 @@ import butterknife.ButterKnife;
 public class StockChartActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final int STOCK_HISTORY_LOADER = 1;
+    public static final String SYMBOL_KEY = "symbol";
     private String symbol;
 
     @BindView(R.id.chart)
@@ -36,7 +36,7 @@ public class StockChartActivity extends AppCompatActivity implements LoaderManag
         setContentView(R.layout.activity_stock_chart);
         ButterKnife.bind(this);
 
-        symbol = getIntent().getExtras().getString(MainActivity.SYMBOL_KEY);
+        symbol = getIntent().getExtras().getString(SYMBOL_KEY);
         mLineChart.setDrawBorders(false);
         mLineChart.setBackgroundColor(Color.parseColor("#FFFFFF"));
         mLineChart.setDrawGridBackground(false);

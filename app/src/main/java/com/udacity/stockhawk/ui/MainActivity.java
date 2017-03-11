@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         StockAdapter.StockAdapterOnClickHandler {
 
     private static final int STOCK_LOADER = 0;
-    public static final String SYMBOL_KEY = "symbol";
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -63,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public void onClick(String symbol) {
         Timber.d("Symbol clicked: %s", symbol);
         Intent i = new Intent(this, StockChartActivity.class);
-        i.putExtra(SYMBOL_KEY, symbol);
+        i.putExtra(StockChartActivity.SYMBOL_KEY, symbol);
         startActivity(i);
     }
 
@@ -95,9 +94,17 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 String symbol = adapter.getSymbolAtPosition(viewHolder.getAdapterPosition());
                 PrefUtils.removeStock(MainActivity.this, symbol);
                 getContentResolver().delete(Contract.Quote.makeUriForStock(symbol), null, null);
+
+                updateWidgets();
             }
 
         }).attachToRecyclerView(stockRecyclerView);
+    }
+
+    private void updateWidgets() {
+        Intent intent = new Intent();
+        intent.setAction(QuoteSyncJob.ACTION_DATA_UPDATED);
+        sendBroadcast(intent);
     }
 
     private boolean networkUp() {

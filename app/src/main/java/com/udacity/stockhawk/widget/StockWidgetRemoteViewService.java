@@ -1,5 +1,6 @@
-package com.udacity.stockhawk;
+package com.udacity.stockhawk.widget;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Binder;
@@ -7,8 +8,10 @@ import android.widget.AdapterView;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
+import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
+import com.udacity.stockhawk.ui.StockChartActivity;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -20,6 +23,12 @@ import java.util.Locale;
  */
 
 public class StockWidgetRemoteViewService extends RemoteViewsService {
+    private Context context;
+
+    public StockWidgetRemoteViewService() {
+        this.context = this;
+    }
+
     @Override
     public RemoteViewsFactory onGetViewFactory(final Intent intent) {
 
@@ -90,12 +99,18 @@ public class StockWidgetRemoteViewService extends RemoteViewsService {
                 String change = dollarFormatWithPlus.format(rawAbsoluteChange);
                 String percentage = percentageFormat.format(percentageChange / 100);
 
-                if (PrefUtils.getDisplayMode(StockWidgetRemoteViewService.this)
+                if (PrefUtils.getDisplayMode(context)
                         .equals(getString(R.string.pref_display_mode_absolute_key))) {
                     views.setTextViewText(R.id.change, change);
                 } else {
                     views.setTextViewText(R.id.change, percentage);
                 }
+
+
+                Intent fillIntent = new Intent();
+                fillIntent.putExtra(StockChartActivity.SYMBOL_KEY, data.getString(Contract.Quote.POSITION_SYMBOL));
+                views.setOnClickFillInIntent(R.id.list_item, fillIntent);
+
                 return views;
             }
 
