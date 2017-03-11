@@ -26,7 +26,7 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_add">Add</string>
 
-    <string name="error_no_network">No network connectivity! Will load stock cursor when the network is available.</string>
+    <string name="error_no_network">No network connectivity! Will load stock details when the network is available.</string>
     <string name="error_no_stocks">No stocks added! Hit the floating action button to add one.</string>
     <string name="error_no_stocks_data">No stocks information available. The server is not returning data.</string>
 
@@ -39,5 +39,6 @@
     <string name="todays_stock">Today\'s stock</string>
     <string name="no_quotes_available">No quotes available!</string>
     <string name="fab_description">Click to add a new stock symbol to the list!</string>
+    <string name="chart_not_available">Chart not available!</string>
 
 </resources>

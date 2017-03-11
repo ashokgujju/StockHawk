@@ -172,20 +172,19 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             error.setText(getString(R.string.error_no_stocks));
             error.setVisibility(View.VISIBLE);
         } else {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            @QuoteSyncJob.StockStatus int status = preferences.getInt(getString(R.string.stock_status_key),
-                    QuoteSyncJob.STOCK_STATUS_OK);
-            switch (status) {
-                case QuoteSyncJob.STOCK_STATUS_SERVER_ERROR:
+            if (networkUp()) {
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                @QuoteSyncJob.StockStatus int status = preferences.getInt(getString(R.string.stock_status_key),
+                        QuoteSyncJob.STOCK_STATUS_OK);
+                if (status == QuoteSyncJob.STOCK_STATUS_SERVER_ERROR) {
                     error.setText(getString(R.string.error_no_stocks_data));
                     error.setVisibility(View.VISIBLE);
-                    break;
-                default: {
-                    if (!networkUp()) {
-                        error.setText(getString(R.string.error_no_network));
-                        error.setVisibility(View.VISIBLE);
-                    }
+                } else {
+                    swipeRefreshLayout.setRefreshing(true);
                 }
+            } else {
+                error.setText(getString(R.string.error_no_network));
+                error.setVisibility(View.VISIBLE);
             }
         }
     }
