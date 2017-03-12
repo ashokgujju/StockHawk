@@ -16,10 +16,10 @@
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingStart="@dimen/activity_horizontal_margin"
             android:paddingEnd="@dimen/activity_horizontal_margin"
             android:paddingLeft="@dimen/activity_horizontal_margin"
-            android:paddingRight="@dimen/activity_horizontal_margin" />
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingStart="@dimen/activity_horizontal_margin" />
 
     </android.support.v4.widget.SwipeRefreshLayout>
 
@@ -29,13 +29,13 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
+        android:contentDescription="@string/fab_description"
         android:onClick="button"
         android:src="@drawable/fab_plus"
         app:backgroundTint="@color/material_blue_500"
         app:borderWidth="@dimen/fab_border_width"
         app:elevation="@dimen/fab_elevation"
         app:fabSize="normal"
-        android:contentDescription="@string/fab_description"
         app:pressedTranslationZ="@dimen/fab_translation_z" />
 
     <TextView

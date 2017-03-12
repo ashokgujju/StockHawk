@@ -31,12 +31,14 @@ import java.util.HashMap;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class StockChartActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class StockChartActivity extends AppCompatActivity implements
+        LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final int STOCK_HISTORY_LOADER = 1;
     public static final String SYMBOL_KEY = "symbol";
+    private HashMap<Float, Long> xAxisDateLabels = new HashMap<>();
+
     private String symbol;
-    private HashMap<Float, Long> xAxisLabels = new HashMap<>();
 
     @BindView(R.id.chart)
     LineChart mChart;
@@ -78,8 +80,8 @@ public class StockChartActivity extends AppCompatActivity implements LoaderManag
             @Override
             public String getFormattedValue(float value, AxisBase axis) {
                 Calendar calendar = Calendar.getInstance();
-                if (xAxisLabels.get(value) != null) {
-                    calendar.setTimeInMillis(xAxisLabels.get(value));
+                if (xAxisDateLabels.get(value) != null) {
+                    calendar.setTimeInMillis(xAxisDateLabels.get(value));
                     int mYear = calendar.get(Calendar.YEAR);
                     int mMonth = calendar.get(Calendar.MONTH);
                     int mDay = calendar.get(Calendar.DAY_OF_MONTH);
@@ -110,7 +112,7 @@ public class StockChartActivity extends AppCompatActivity implements LoaderManag
                     String[] quoteInfo = quotes[i].split(QuoteSyncJob.TIME_VALUE_DIVIDER);
                     if (quoteInfo.length > 1) {
                         values.add(new Entry(index, Float.parseFloat(quoteInfo[1])));
-                        xAxisLabels.put(index, Long.valueOf(quoteInfo[0]));
+                        xAxisDateLabels.put(index, Long.valueOf(quoteInfo[0]));
                         index++;
                     }
                 }

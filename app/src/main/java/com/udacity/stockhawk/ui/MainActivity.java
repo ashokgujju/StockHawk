@@ -18,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,15 +39,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         StockAdapter.StockAdapterOnClickHandler {
 
     private static final int STOCK_LOADER = 0;
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(QuoteSyncJob.ACTION_INVALID_SYMBOL)) {
-                String symbol = intent.getExtras().getString(QuoteSyncJob.SYMBOL_KEY);
-                Toast.makeText(context, getString(R.string.toast_invalid_stock_symbol, symbol), Toast.LENGTH_LONG).show();
-            }
-        }
-    };
+
     @SuppressWarnings("WeakerAccess")
     @BindView(R.id.recycler_view)
     RecyclerView stockRecyclerView;
@@ -56,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @SuppressWarnings("WeakerAccess")
     @BindView(R.id.error)
     TextView error;
+
     private StockAdapter adapter;
 
     @Override
@@ -69,7 +63,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
@@ -107,12 +100,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         sendBroadcast(intent);
     }
 
-    private boolean networkUp() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnectedOrConnecting();
-    }
 
     @Override
     public void onRefresh() {
@@ -133,7 +120,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     void addStock(String symbol) {
         if (symbol != null && !symbol.isEmpty()) {
-
             PrefUtils.addStock(this, symbol);
             QuoteSyncJob.syncImmediately(this);
 
@@ -164,6 +150,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             emptyState();
         } else {
             error.setVisibility(View.GONE);
+            if (!networkUp()) {
+                Toast toast = Toast.makeText(this, R.string.latest_stock_info_not_available,
+                        Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER, Gravity.CENTER, 0);
+                toast.show();
+            }
         }
     }
 
@@ -215,7 +207,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         if (id == R.id.action_change_units) {
             PrefUtils.toggleDisplayMode(this);
             setDisplayModeMenuItemIcon(item);
@@ -235,5 +226,22 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onStop() {
         super.onStop();
         unregisterReceiver(broadcastReceiver);
+    }
+
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(QuoteSyncJob.ACTION_INVALID_SYMBOL)) {
+                String symbol = intent.getExtras().getString(QuoteSyncJob.SYMBOL_KEY);
+                Toast.makeText(context, getString(R.string.toast_invalid_stock_symbol, symbol), Toast.LENGTH_LONG).show();
+            }
+        }
+    };
+
+    private boolean networkUp() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnectedOrConnecting();
     }
 }

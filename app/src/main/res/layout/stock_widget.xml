@@ -34,7 +34,7 @@
             android:layout_height="match_parent"
             android:fontFamily="sans-serif-condensed"
             android:gravity="center"
-            android:text="@string/no_quotes_available"
+            android:text="@string/no_info_available"
             android:textAppearance="?android:textAppearanceLarge" />
     </FrameLayout>
 </LinearLayout>

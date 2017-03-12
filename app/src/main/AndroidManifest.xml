@@ -23,6 +23,14 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.StockChartActivity"
+            android:parentActivityName=".ui.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.MainActivity" />
+        </activity>
+
         <service
             android:name=".sync.QuoteIntentService"
             android:exported="false" />
@@ -38,12 +46,12 @@
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <activity android:name=".ui.StockChartActivity"
-            android:parentActivityName=".ui.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.MainActivity"/>
-        </activity>
+        <service
+            android:name=".widget.StockWidgetRemoteViewService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS">
+
+        </service>
 
         <receiver android:name=".widget.StockWidgetProvider">
             <intent-filter>
@@ -54,13 +62,5 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info" />
         </receiver>
-
-        <service
-            android:name=".widget.StockWidgetRemoteViewService"
-            android:exported="false"
-            android:permission="android.permission.BIND_REMOTEVIEWS">
-
-        </service>
     </application>
-
 </manifest>

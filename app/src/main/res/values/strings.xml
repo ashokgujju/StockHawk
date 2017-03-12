@@ -26,20 +26,21 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_add">Add</string>
 
-    <string name="error_no_network">No network connectivity! Will load stock details when the network is available.</string>
+    <string name="error_no_network">No network connectivity! Stock quotes will be loaded when the network is available.</string>
     <string name="error_no_stocks">No stocks added! Hit the floating action button to add one.</string>
     <string name="error_no_stocks_data">No stocks information available. The server is not returning data.</string>
 
-    <string name="toast_stock_added_no_connectivity">Symbol %s added. Will refresh when network available.</string>
-    <string name="toast_no_connectivity">Will refresh when network available.</string>
+    <string name="toast_stock_added_no_connectivity">Symbol %s added. Stock quotes will be loaded when network is available.</string>
+    <string name="toast_no_connectivity">Latest quotes will be loaded when network is available.</string>
     <string name="sample_error_msg">Error message</string>
     <string name="dialog_tag">StockDialogFragment</string>
-    <string name="toast_invalid_stock_symbol">%s is a invalid stock symbol!</string>
+    <string name="toast_invalid_stock_symbol">%s is not a valid stock symbol!</string>
     <string name="stock_status_key">stock_status</string>
     <string name="todays_stock">Today\'s stock</string>
-    <string name="no_quotes_available">No quotes available!</string>
-    <string name="fab_description">Click to add a new stock symbol to the list!</string>
+    <string name="no_info_available">No stocks quotes available!</string>
+    <string name="fab_description">Click to add a new stock symbol to the list</string>
     <string name="chart_not_available">Chart not available!</string>
     <string name="currency_symbol">$</string>
+    <string name="latest_stock_info_not_available">No internet connection\n\nLatest stocks quotes is not availale</string>
 
 </resources>

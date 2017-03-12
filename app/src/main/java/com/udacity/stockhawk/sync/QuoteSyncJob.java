@@ -19,6 +19,7 @@ import com.udacity.stockhawk.data.PrefUtils;
 import java.io.FileNotFoundException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -147,8 +148,10 @@ public final class QuoteSyncJob {
             Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED);
             context.sendBroadcast(dataUpdatedIntent);
 
+        } catch (UnknownHostException exception) {
+            Timber.e(exception);
         } catch (Exception exception) {
-            Timber.e(exception, "Error fetching stock quotes");
+            setStockStatus(context, STOCK_STATUS_SERVER_ERROR);
         }
     }
 

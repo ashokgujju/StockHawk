@@ -12,8 +12,9 @@ public class StockHawkApp extends Application {
     public void onCreate() {
         super.onCreate();
 
-        Stetho.initializeWithDefaults(this);
         if (BuildConfig.DEBUG) {
+            Stetho.initializeWithDefaults(this);
+
             Timber.uprootAll();
             Timber.plant(new Timber.DebugTree());
         }
