@@ -40,5 +40,6 @@
     <string name="no_quotes_available">No quotes available!</string>
     <string name="fab_description">Click to add a new stock symbol to the list!</string>
     <string name="chart_not_available">Chart not available!</string>
+    <string name="currency_symbol">$</string>
 
 </resources>
